@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react"
 import {tickets} from "./tickets.css"
+import {useNavigate} from "react-router-dom"
 
 export const TicketList = () => {
     const [tickets, setTickets] = useState([])
     const [filteredTickets, setFiltered] = useState([])
     const [emergency, setEmergency] = useState(false) //don't show emergency tickets by default
+    const [openOnly, updateOpenOnly] = useState(false)
+    const navigate = useNavigate()
 
     const localHoneyUser = localStorage.getItem("honey_user")
     const honeyUserObject = JSON.parse(localHoneyUser)
@@ -48,8 +51,24 @@ export const TicketList = () => {
                 setFiltered(myTickets)
             }
         },
-            [tickets]
+         [tickets]
     )
+
+        useEffect(
+            () => {
+                if (openOnly) {
+                const opentTicketArray = tickets.filter(ticket => {
+                    return ticket.userId === honeyUserObject.id && ticket.dateCompleted === ""
+                })
+                setFiltered(opentTicketArray)
+            }
+            else {
+                const myTickets = tickets.filter(ticket => ticket.userId === honeyUserObject.id)
+                setFiltered(myTickets)
+            }
+            },
+            [ openOnly ]
+        )
 
     return <>
     {
@@ -58,8 +77,11 @@ export const TicketList = () => {
             <button onClick={ () => setEmergency(true) }>Emergency Only</button>
             <button onClick={ () => setEmergency(false)} >Show All</button>
         </>
-            : ""
-
+        : <>
+            <button onClick={() => navigate("/ticket/create")}>Create Ticket</button>
+            <button onClick={() => updateOpenOnly(true)}>Open Ticket</button>
+            <button onClick={() => updateOpenOnly(false)}>All My Tickets</button>
+        </>
 }
     <h2>List of Tickets</h2><article className="tickets">
         {filteredTickets.map(
