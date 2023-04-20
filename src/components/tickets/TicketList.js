@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react"
-import {tickets} from "./tickets.css"
-import {useNavigate} from "react-router-dom"
+import "./tickets.css"
+import { Ticket } from "./Ticket"
+import { useNavigate } from "react-router-dom"
 
-export const TicketList = () => {
+export const TicketList = ({ searchTermState }) => {
     const [tickets, setTickets] = useState([])
+    const [employees, setEmployees] = useState([])
     const [filteredTickets, setFiltered] = useState([])
     const [emergency, setEmergency] = useState(false) //don't show emergency tickets by default
     const [openOnly, updateOpenOnly] = useState(false)
@@ -11,6 +13,16 @@ export const TicketList = () => {
 
     const localHoneyUser = localStorage.getItem("honey_user")
     const honeyUserObject = JSON.parse(localHoneyUser)
+
+    useEffect(
+        () => {
+            const searchedTickets = tickets.filter(ticket => {
+                return ticket.description.toLowerCase().startsWith(searchTermState)
+            })
+            setFiltered(searchedTickets)
+        },
+        [ searchTermState ]
+    )
     
     useEffect(
         () => {
@@ -25,17 +37,27 @@ export const TicketList = () => {
         [emergency]
      )
 
-    useEffect(
-        () => {
-            fetch('http://localhost:8088/serviceTickets')
+     const getAllTickets = () => {
+       
+        fetch (`http://localhost:8088/serviceTickets?_embed=employeeTickets`)
             .then(response => response.json())
             .then((ticketArray) => {
                 setTickets(ticketArray)
             })
-            console.log("Initial state of tickets", tickets) // View the initial state of tickets
-        },
-        [] // When this array is empty, you are observing initial component state
-    )
+        }
+    
+        useEffect(
+            () => {
+                getAllTickets()
+    
+                fetch (`http://localhost:8088/employees?_expand=user`) 
+                    .then(response => response.json()) 
+                    .then((employeeArray) => {
+                        setEmployees(employeeArray)
+                    })
+            },
+            [] //When this array is empty, you are observing initial component state
+        )
 
     useEffect(
         () => {
@@ -83,14 +105,18 @@ export const TicketList = () => {
             <button onClick={() => updateOpenOnly(false)}>All My Tickets</button>
         </>
 }
-    <h2>List of Tickets</h2><article className="tickets">
-        {filteredTickets.map(
-            (ticket) => {
-                return <section className="ticket" key={`ticket--${ticket.id}`}>
-                    <header>{ticket.description}</header>
-                    <footer>Emergency: {ticket.emergency ? "Yes" : "No"}</footer>
-                </section>
-            }
-        )}
-    </article></>
+    <h2>List of Tickets</h2>
+    <article className="tickets">
+        {
+        filteredTickets.map(
+            (ticket) => <Ticket key={`ticket--${ticket.id}`}
+            getAllTickets={getAllTickets} //prop sharing the fetch call to rerender after the button is clicked in Ticket.js
+            employees= {employees} 
+            currentUser={honeyUserObject} //sending the whole object rather than just isStaff = {honeyUserObject.staff}
+            ticketObject={ticket} />
+
+             )
+          }
+        </article>
+    </>
 } 

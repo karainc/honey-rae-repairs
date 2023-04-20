@@ -1,0 +1,14 @@
+.employees {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+.employee {
+    background-color: rgb(131, 240, 204);
+    border-color: darkgreen dotted 0.8em;
+    color: darkgreen;
+}
+body {
+    font-size: 30px;
+}
